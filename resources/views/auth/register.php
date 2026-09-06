@@ -13,7 +13,7 @@
                 <div class="alert alert-danger" role="alert"><?= $e($error) ?></div>
             <?php endif; ?>
 
-            <form method="post" action="/register" class="auth-form">
+            <form method="post" action="/account/create" class="auth-form">
                 <?= $csrf->field() ?>
                 <div>
                     <label class="form-label" for="register-email">Email address</label>

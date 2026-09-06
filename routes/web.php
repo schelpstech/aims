@@ -100,6 +100,7 @@ return static function (
     $router->post('/login', [$auth, 'login']);
     $router->get('/register', [$auth, 'showRegister']);
     $router->post('/register', [$auth, 'register']);
+    $router->post('/account/create', [$auth, 'register']);
     $router->get('/forgot-password', [$auth, 'showForgotPassword']);
     $router->post('/forgot-password', [$auth, 'forgotPassword']);
     $router->get('/reset-password', [$auth, 'showResetPassword']);

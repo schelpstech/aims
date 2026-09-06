@@ -319,7 +319,7 @@ CREATE TABLE `event_registrations` (
   KEY `idx_event_registrations_registered_event_status` (`registered_at`,`event_id`,`status`),
   CONSTRAINT `fk_event_registrations_event` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_event_registrations_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chk_event_attendance_token_hash` CHECK (((`attendance_token_hash` is null) or regexp_like(`attendance_token_hash`,_ascii'^[0-9a-f]{64}$'))),
+  CONSTRAINT `chk_event_attendance_token_hash` CHECK ((`attendance_token_hash` IS NULL OR `attendance_token_hash` REGEXP '^[0-9a-f]{64}$')),
   CONSTRAINT `chk_event_registrations_status` CHECK ((`status` in (_ascii'registered',_ascii'cancelled',_ascii'attended')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
