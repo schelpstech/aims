@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);namespace App\Services\Cms;final readonly class CmsResult{private function __construct(public bool$successful,public int$status,public string$message,public array$data=[]){}public static function success(string$m,array$d=[]):self{return new self(true,200,$m,$d);}public static function failure(int$s,string$m):self{return new self(false,$s,$m);}}

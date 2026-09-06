@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /portal/
+Disallow: /payments/
+Disallow: /media/
+
+# Add a Sitemap directive only after the canonical HTTPS production URL is verified.

@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);namespace App\Services\Certificates;use RuntimeException;final class UnavailableCertificateRenderer implements CertificateRendererInterface{public function render(array$certificate,string$verificationUrl):CertificateDocument{throw new RuntimeException('Certificate document renderer is not configured.');}}

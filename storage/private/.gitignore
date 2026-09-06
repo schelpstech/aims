@@ -1,0 +1,8 @@
+*
+!.gitignore
+!membership-documents/
+!cms-media/
+membership-documents/*
+!membership-documents/.gitignore
+cms-media/*
+!cms-media/.gitignore

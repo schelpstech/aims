@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);namespace App\Services\Certificates;interface CertificateRendererInterface{/** @param array<string,mixed> $certificate */public function render(array$certificate,string$verificationUrl):CertificateDocument;}
