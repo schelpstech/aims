@@ -1,0 +1,6 @@
+<?php declare(strict_types=1); echo $view->render('components.page-hero', compact('page', 'e')); ?>
+<section class="section"><div class="container-narrow"><div class="prose"><p><?= nl2br($e($professionalArea['description'] ?: 'A full description for this professional area has not yet been published.')) ?></p></div>
+<div class="section-heading"><p class="eyebrow">Connected learning</p><h2>Published programmes</h2></div>
+<?php if ($professionalArea['programmes'] === []): ?><div class="empty-state"><p>No programmes are currently published for this area.</p></div><?php else: ?><div class="programme-grid"><?php foreach ($professionalArea['programmes'] as $programme): ?><article class="programme-card"><span class="status-pill"><?= $e($programme['type']) ?></span><h3><a href="/programmes/<?= rawurlencode($programme['slug']) ?>"><?= $e($programme['name']) ?></a></h3><p><?= $e($programme['code']) ?></p></article><?php endforeach; ?></div><?php endif; ?>
+<?php if ($professionalArea['coordinators'] !== []): ?><div class="prose"><h2>Area coordinators</h2><ul><?php foreach ($professionalArea['coordinators'] as $person): ?><li><?= $e(trim(($person['title'] ? $person['title'] . ' ' : '') . $person['name'])) ?><?= $person['role'] ? ' — ' . $e($person['role']) : '' ?></li><?php endforeach; ?></ul></div><?php endif; ?>
+</div></section>

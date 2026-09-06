@@ -1,0 +1,6 @@
+<?php declare(strict_types=1); ?>
+<section class="section"><div class="container-narrow"><div class="section-heading"><p class="eyebrow">Member finance</p><h1>Invoices and payments</h1><p>Payment is credited only after an independent server-to-server verification by the configured provider.</p></div>
+<?php if ($message): ?><div class="notice" role="status"><?= $e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="form-error" role="alert"><?= $e($error) ?></div><?php endif; ?>
+<div class="admin-list"><?php if ($invoices === []): ?><div class="empty-state"><p>No invoices are currently available.</p></div><?php endif; ?>
+<?php foreach ($invoices as $invoice): ?><article class="admin-panel"><div class="programme-card-top"><strong><?= $e($invoice['invoice_number']) ?></strong><span class="status-pill"><?= $e(ucwords($invoice['status'])) ?></span></div><p><?= $e($invoice['currency']) ?> <?= $e(number_format(((int) $invoice['total_minor']) / 100, 2)) ?></p>
+<?php if ($invoice['status'] === 'pending'): ?><form method="post" action="/account/invoices/<?= rawurlencode($invoice['public_id']) ?>/pay"><?= $csrf->field() ?><input type="hidden" name="idempotency_key" value="<?= $e(bin2hex(random_bytes(20))) ?>"><button class="btn btn-navy" type="submit">Pay securely</button></form><?php endif; ?></article><?php endforeach; ?></div></div></section>

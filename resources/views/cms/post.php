@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);echo$view->render('components.page-hero',compact('page','e'));?><article class="section"><div class="container-narrow"><p class="eyebrow">Published <?= $e(date('j F Y',strtotime($post['published_at']))) ?></p><div class="cms-content"><?= $post['body_html'] ?></div></div></article>

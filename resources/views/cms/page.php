@@ -1,0 +1,1 @@
+<?php declare(strict_types=1);echo$view->render('components.page-hero',compact('page','e'));?><article class="section"><div class="container-narrow cms-content"><?= $contentPage['body_html'] ?></div></article>
