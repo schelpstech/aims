@@ -66,6 +66,10 @@ try {
     $assert(str_contains($body, 'noindex, nofollow'), 'The restricted dashboard is indexable.');
     $assert(($response->headers()['Cache-Control'] ?? '') === 'no-store, private', 'The restricted dashboard may be cached.');
 
+    $layout = (string) file_get_contents(dirname(__DIR__) . '/resources/views/layouts/public.php');
+    $assert(str_contains($layout, "str_starts_with(\$requestPath, '/admin/')"), 'Administrative child pages do not receive shared dashboard navigation.');
+    $assert(str_contains($layout, 'Back to admin dashboard'), 'The shared admin dashboard return control is missing.');
+
     $deniedChecker = new class implements PermissionCheckerInterface {
         public function allows(int $userId, string $permission): bool
         {
@@ -91,7 +95,7 @@ try {
     }
     rmdir($temporaryDirectory);
 
-    echo "Admin dashboard checks passed: permission-aware modules, account security link, cache protection, and access denial.\n";
+    echo "Admin dashboard checks passed: permission-aware modules, shared return navigation, account security, cache protection, and access denial.\n";
 } catch (Throwable $exception) {
     if ($session instanceof SessionManager && session_status() === PHP_SESSION_ACTIVE) {
         $session->invalidate();

@@ -26,12 +26,19 @@ $canonical = preg_match('#^https?://#i', $canonicalBase) === 1
     <?php endif; ?>
     <title><?= $e($metaTitle) ?></title>
     <link rel="stylesheet" href="/assets/vendor/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/site.css?v=20260907.1">
+    <link rel="stylesheet" href="/assets/css/site.css?v=20260907.2">
 </head>
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <?= $view->render('components.header', compact('site', 'navigation', 'activePage', 'requestPath', 'e')) ?>
     <main id="main-content">
+        <?php if ($requestPath !== '/admin' && str_starts_with($requestPath, '/admin/')): ?>
+            <nav class="admin-dashboard-return" aria-label="Administration navigation">
+                <div class="container-wide">
+                    <a class="btn btn-outline-navy" href="/admin"><span aria-hidden="true">←</span> Back to admin dashboard</a>
+                </div>
+            </nav>
+        <?php endif; ?>
         <?= $content ?>
     </main>
     <?= $view->render('components.footer', compact('site', 'navigation', 'e')) ?>

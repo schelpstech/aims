@@ -2039,6 +2039,14 @@ main,
     gap: 1rem;
 }
 
+.admin-dashboard-return {
+    padding-top: clamp(0.9rem, 2vw, 1.4rem);
+}
+
+.admin-dashboard-return .btn {
+    gap: 0.45rem;
+}
+
 .cta-row {
     display: flex;
     flex-wrap: wrap;
