@@ -1885,6 +1885,96 @@ fieldset:disabled {
 .admin-actions textarea { width: 100%; min-height: 5rem; margin-bottom: .75rem; padding: .7rem; border: 1px solid #b8c1cf; border-radius: .4rem; }
 @media (max-width: 720px) { .form-grid, .programme-detail-grid { grid-template-columns: 1fr; } }
 
+/* Unified administration and account security */
+.admin-dashboard {
+    background:
+        radial-gradient(circle at 90% 5%, rgb(199 163 92 / 12%), transparent 25rem),
+        var(--aims-warm);
+}
+
+.admin-dashboard-welcome {
+    margin-bottom: 1.5rem;
+}
+
+.admin-module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+}
+
+.admin-module-card {
+    display: flex;
+    min-width: 0;
+    min-height: 18rem;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    background: #fff;
+    border: 1px solid var(--aims-line);
+    border-top: 0.25rem solid var(--aims-gold-500);
+    border-radius: var(--aims-radius);
+    box-shadow: 0 12px 35px rgb(7 24 47 / 6%);
+}
+
+.admin-module-card h2 {
+    margin: 0.4rem 0 0.75rem;
+    color: var(--aims-navy-900);
+    font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+}
+
+.admin-module-card p:not(.eyebrow),
+.admin-account-panel p {
+    color: var(--aims-muted);
+}
+
+.admin-account-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.admin-account-panel h2 {
+    margin: 0.35rem 0 0.5rem;
+}
+
+.admin-account-panel p {
+    margin: 0;
+}
+
+.admin-account-panel form {
+    margin: 0;
+}
+
+.auth-secondary-actions {
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 719px) {
+    .admin-dashboard-welcome,
+    .admin-account-panel {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-dashboard-welcome .cta-row,
+    .admin-account-panel .cta-row,
+    .auth-secondary-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-dashboard-welcome .btn,
+    .admin-account-panel .btn,
+    .auth-secondary-actions .btn,
+    .admin-account-panel form {
+        width: 100%;
+    }
+}
+
 /* Stage 21 shared responsive and interaction quality */
 :focus-visible {
     outline: 3px solid var(--aims-white);

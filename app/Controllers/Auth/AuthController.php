@@ -19,6 +19,20 @@ use App\View\View;
 
 final class AuthController extends Controller
 {
+    private const ADMIN_PERMISSIONS = [
+        'member.view',
+        'programme.view',
+        'programme.application_view',
+        'event.manage',
+        'certificate.issue',
+        'certificate.revoke',
+        'certificate.type_manage',
+        'cms.edit',
+        'report.view',
+        'member.renewal_override',
+        'member.renewal_policy',
+    ];
+
     public function __construct(
         View $view,
         Csrf $csrf,
@@ -174,17 +188,59 @@ final class AuthController extends Controller
     public function account(Request $request): Response
     {
         $user = $request->attribute('auth.user');
+        $userId = is_array($user) ? (int) ($user['id'] ?? 0) : 0;
 
         return $this->authView('auth.account', 'Your account', 'Secure AIMS Nigeria account access.', $request, [
             'user' => is_array($user) ? $user : [],
             'message' => $this->session->pullFlash('auth_message'),
-            'canManageMembership' => is_array($user)
-                && $this->permissions?->allows((int) ($user['id'] ?? 0), 'member.view') === true,
-            'canAccessReports' => is_array($user)
-                && $this->permissions?->allows((int) ($user['id'] ?? 0), 'report.view') === true,
-            'canAccessMemberPortal' => is_array($user)
-                && $this->memberPortal?->dashboard((int) ($user['id'] ?? 0))->successful === true,
+            'canManageMembership' => $this->permissions?->allows($userId, 'member.view') === true,
+            'canAccessReports' => $this->permissions?->allows($userId, 'report.view') === true,
+            'canAccessAdmin' => $this->hasAnyPermission($userId, self::ADMIN_PERMISSIONS),
+            'canAccessMemberPortal' => $userId > 0
+                && $this->memberPortal?->dashboard($userId)->successful === true,
         ]);
+    }
+
+    public function showSecurity(Request $request): Response
+    {
+        $user = $request->attribute('auth.user');
+
+        return $this->authView('auth.security', 'Account security', 'Change your password and protect your active account sessions.', $request, [
+            'user' => is_array($user) ? $user : [],
+            'message' => $this->session->pullFlash('security_message'),
+            'error' => null,
+        ]);
+    }
+
+    public function changePassword(Request $request): Response
+    {
+        $currentPassword = is_string($request->input('current_password')) ? $request->input('current_password') : '';
+        $newPassword = is_string($request->input('new_password')) ? $request->input('new_password') : '';
+        $confirmation = is_string($request->input('new_password_confirmation')) ? $request->input('new_password_confirmation') : '';
+
+        if (!hash_equals($newPassword, $confirmation)) {
+            return $this->securityView($request, 'The new password confirmation does not match.', 422);
+        }
+
+        $result = $this->auth->changePassword(
+            $currentPassword,
+            $newPassword,
+            $request->ip(),
+            $this->userAgent($request),
+        );
+
+        if ($result->successful) {
+            $this->session->flash('security_message', $result->message);
+
+            return $this->redirect('/account/security', 303)->withHeader('Cache-Control', 'no-store');
+        }
+
+        $status = $result->code === 'throttled' ? 429 : 422;
+        $response = $this->securityView($request, $result->message, $status);
+
+        return $result->retryAfter === null
+            ? $response
+            : $response->withHeader('Retry-After', (string) $result->retryAfter);
     }
 
     public function logout(Request $request): Response
@@ -243,5 +299,32 @@ final class AuthController extends Controller
     private function userAgent(Request $request): string
     {
         return (string) ($request->header('User-Agent', '') ?? '');
+    }
+
+    private function securityView(Request $request, string $error, int $status): Response
+    {
+        $user = $request->attribute('auth.user');
+
+        return $this->authView('auth.security', 'Account security', 'Change your password and protect your active account sessions.', $request, [
+            'user' => is_array($user) ? $user : [],
+            'message' => null,
+            'error' => $error,
+        ], $status);
+    }
+
+    /** @param list<string> $permissions */
+    private function hasAnyPermission(int $userId, array $permissions): bool
+    {
+        if ($userId < 1 || $this->permissions === null) {
+            return false;
+        }
+
+        foreach ($permissions as $permission) {
+            if ($this->permissions->allows($userId, $permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

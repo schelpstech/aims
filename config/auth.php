@@ -23,4 +23,9 @@ return [
         'ip_attempts' => $environment->int('AUTH_RESET_IP_ATTEMPTS', 20),
         'decay_minutes' => $environment->int('AUTH_RESET_DECAY_MINUTES', 60),
     ],
+    'password_change' => [
+        'identity_attempts' => $environment->int('AUTH_PASSWORD_CHANGE_ATTEMPTS', 5),
+        'ip_attempts' => $environment->int('AUTH_PASSWORD_CHANGE_IP_ATTEMPTS', 20),
+        'decay_minutes' => $environment->int('AUTH_PASSWORD_CHANGE_DECAY_MINUTES', 15),
+    ],
 ];

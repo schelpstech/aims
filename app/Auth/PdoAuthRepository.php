@@ -78,6 +78,51 @@ final class PdoAuthRepository extends Repository implements AuthRepositoryInterf
         $statement->execute(['password_hash' => $passwordHash, 'now' => $this->date($now), 'id' => $userId]);
     }
 
+    public function changePasswordAndRevokeSessions(
+        int $userId,
+        string $expectedPasswordHash,
+        string $newPasswordHash,
+        DateTimeImmutable $now,
+    ): bool {
+        return $this->transaction(function (PDO $database) use ($userId, $expectedPasswordHash, $newPasswordHash, $now): bool {
+            $timestamp = $this->date($now);
+            $update = $database->prepare(<<<'SQL'
+                UPDATE users
+                SET password_hash = :password_hash,
+                    password_changed_at = :changed_at,
+                    failed_login_attempts = 0,
+                    locked_until = NULL,
+                    updated_at = :updated_at
+                WHERE id = :id
+                  AND password_hash = :expected_password_hash
+                  AND status = 'active'
+                  AND deleted_at IS NULL
+                SQL);
+            $update->execute([
+                'password_hash' => $newPasswordHash,
+                'expected_password_hash' => $expectedPasswordHash,
+                'changed_at' => $timestamp,
+                'updated_at' => $timestamp,
+                'id' => $userId,
+            ]);
+            if ($update->rowCount() !== 1) {
+                return false;
+            }
+
+            $tokens = $database->prepare(
+                'UPDATE password_reset_tokens SET used_at = :now WHERE user_id = :user_id AND used_at IS NULL',
+            );
+            $tokens->execute(['now' => $timestamp, 'user_id' => $userId]);
+
+            $sessions = $database->prepare(
+                'UPDATE sessions SET revoked_at = :now WHERE user_id = :user_id AND revoked_at IS NULL',
+            );
+            $sessions->execute(['now' => $timestamp, 'user_id' => $userId]);
+
+            return true;
+        });
+    }
+
     public function storeToken(int $userId, string $purpose, string $tokenHash, DateTimeImmutable $expiresAt, DateTimeImmutable $now): void
     {
         $table = $this->tokenTable($purpose);

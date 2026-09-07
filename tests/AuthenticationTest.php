@@ -88,6 +88,7 @@ try {
             ],
             'registration' => ['identity_attempts' => 2, 'ip_attempts' => 100, 'decay_minutes' => 60],
             'password_reset' => ['identity_attempts' => 2, 'ip_attempts' => 100, 'decay_minutes' => 60],
+            'password_change' => ['identity_attempts' => 5, 'ip_attempts' => 20, 'decay_minutes' => 15],
         ],
         sessionLifetimeMinutes: 120,
         clock: static function () use (&$now): DateTimeImmutable {
@@ -215,6 +216,32 @@ try {
     $assert($authorized->status() === 200, 'Authentication middleware rejected an active server-side session.');
     $assert(json_decode($authorized->body(), true)['email'] === 'member@example.test', 'Authentication middleware did not attach the server-derived user.');
 
+    $passwordBeforeRejectedChange = $repository->users[1]['password_hash'];
+    $rejectedChange = $auth->changePassword('Incorrect current password', 'A secure changed passphrase 64!', '127.0.0.7', 'AIMS Test');
+    $assert(!$rejectedChange->successful && $rejectedChange->code === 'invalid_current_password', 'An invalid current password was accepted.');
+    $assert($repository->users[1]['password_hash'] === $passwordBeforeRejectedChange, 'A rejected password change modified the password hash.');
+
+    $sessionBeforePasswordChange = $session->id();
+    $csrfBeforePasswordChange = $csrf->token();
+    $changedPassword = 'A secure changed passphrase 64!';
+    $passwordChange = $auth->changePassword($newPassword, $changedPassword, '127.0.0.7', 'AIMS Test');
+    $assert($passwordChange->successful && $passwordChange->code === 'password_changed', 'A valid authenticated password change failed.');
+    $assert(password_verify($changedPassword, $repository->users[1]['password_hash']), 'The authenticated password change did not persist a secure hash.');
+    $assert($session->id() !== $sessionBeforePasswordChange, 'The session identifier was not regenerated after changing the password.');
+    $assert($csrf->token() !== $csrfBeforePasswordChange, 'The CSRF token was not rotated after changing the password.');
+    $assert($auth->currentUser() !== null, 'The current session was not re-established after changing the password.');
+    $assert(
+        count(array_filter($repository->sessions, static fn (array $record): bool => $record['user_id'] === 1 && $record['revoked_at'] === null)) === 1,
+        'Changing the password did not revoke other sessions while retaining one current session.',
+    );
+    $assert(
+        count(array_filter($repository->audits, static fn (array $audit): bool => $audit['action'] === 'auth.password_changed')) === 1,
+        'The authenticated password change was not audited.',
+    );
+
+    $auth->logout('127.0.0.7', 'AIMS Test');
+    $assert(!$auth->login('member@example.test', $newPassword, '127.0.0.7', 'AIMS Test')->successful, 'The previous password remained usable after a password change.');
+    $assert($auth->login('member@example.test', $changedPassword, '127.0.0.7', 'AIMS Test')->successful, 'The changed password could not authenticate.');
     $auth->logout('127.0.0.7', 'AIMS Test');
     $session = null;
 

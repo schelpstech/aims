@@ -100,12 +100,19 @@ try {
     $assert($guestAccount->status() === 302, 'The account page did not reject a guest.');
     $assert(($guestAccount->headers()['Location'] ?? '') === '/login', 'The account page guest redirect is incorrect.');
 
+    $guestSecurity = $router->dispatch(new Request('GET', '/account/security'));
+    $assert($guestSecurity->status() === 302, 'The account security page did not reject a guest.');
+    $assert(($guestSecurity->headers()['Location'] ?? '') === '/login', 'The account security guest redirect is incorrect.');
+
     $csrfFailure = $router->dispatch(new Request('POST', '/login'));
     $assert($csrfFailure->status() === 419, 'The login endpoint accepted a POST without CSRF.');
     $assert(($csrfFailure->headers()['Cache-Control'] ?? '') === 'no-store', 'The CSRF rejection may be cached.');
 
     $registrationCsrfFailure = $router->dispatch(new Request('POST', '/account/create'));
     $assert($registrationCsrfFailure->status() === 419, 'The alternate registration endpoint accepted a POST without CSRF.');
+
+    $passwordChangeCsrfFailure = $router->dispatch(new Request('POST', '/account/security'));
+    $assert($passwordChangeCsrfFailure->status() === 419, 'The password change endpoint accepted a POST without CSRF.');
 
     $session->invalidate();
     $session = null;

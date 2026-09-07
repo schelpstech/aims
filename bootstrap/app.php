@@ -11,6 +11,7 @@ use App\Authorization\PdoPermissionChecker;
 use App\Config\Config;
 use App\Config\Environment;
 use App\Controllers\Auth\AuthController;
+use App\Controllers\Admin\AdminDashboardController;
 use App\Controllers\Membership\MembershipApplicationController;
 use App\Controllers\Membership\MembershipAdminController;
 use App\Controllers\MemberPortal\MemberPortalController;
@@ -230,6 +231,7 @@ $normalizedCms=strtolower(str_replace('\\','/',rtrim($cmsPath,'/\\')));if($norma
 $cmsService=new CmsService(new CmsRepository($connection),$permissionChecker,new SafeHtml(),new CmsMediaStorage($cmsPath,max(1,(int)$config->get('cms.max_upload_bytes',10485760))));
 $cmsController=new CmsController($view,$csrf,$cmsService,$session,$publicContent);
 $reportingController=new ReportingController($view,$csrf,new ReportingService(new ReportingRepository($connection),$permissionChecker),$publicContent);
+$adminDashboardController = new AdminDashboardController($view, $csrf, $permissionChecker, $publicContent);
 $memberPermissionMiddleware = [];
 foreach (['view', 'review', 'approve', 'reject', 'query'] as $permissionAction) {
     $memberPermissionMiddleware[$permissionAction] = new AuthorizeMiddleware(
@@ -290,6 +292,7 @@ $registerRoutes(
     $reportingController,
     $reportViewMiddleware,
     $reportExportMiddleware,
+    $adminDashboardController,
 );
 
 return new Application(

@@ -19,6 +19,13 @@ interface AuthRepositoryInterface
 
     public function updatePasswordHash(int $userId, string $passwordHash, DateTimeImmutable $now): void;
 
+    public function changePasswordAndRevokeSessions(
+        int $userId,
+        string $expectedPasswordHash,
+        string $newPasswordHash,
+        DateTimeImmutable $now,
+    ): bool;
+
     public function storeToken(int $userId, string $purpose, string $tokenHash, DateTimeImmutable $expiresAt, DateTimeImmutable $now): void;
 
     public function revokeUnusedTokens(int $userId, string $purpose, DateTimeImmutable $now): void;

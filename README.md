@@ -100,6 +100,12 @@ CMS media is stored outside `public` under `CMS_MEDIA_PATH`. Uploads require PHP
 
 Content Managers receive only `cms.edit` and `cms.publish`; they do not inherit Super Administrator capabilities. All administrative writes remain authenticated, CSRF-protected, permission checked, and audited.
 
+## Administration and account security
+
+Authenticated staff open `/admin` for a permission-aware dashboard. It links only to modules authorized for the current account; every destination retains its own route middleware and service-level authorization. The account overview links authorized staff to this dashboard and gives every authenticated user access to `/account/security`.
+
+Changing a password requires the current password and the existing password policy. The update uses an optimistic hash check inside the database transaction, revokes unused reset tokens and all existing server-side sessions, rotates the current PHP session and CSRF token, and establishes one new current session. Successful changes and rejected or throttled attempts are recorded through the existing audit and security-event foundations. `AUTH_PASSWORD_CHANGE_*` environment settings control the dedicated rate limit.
+
 ## Architecture rules
 
 - Controllers coordinate HTTP concerns and remain thin.

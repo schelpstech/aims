@@ -26,7 +26,7 @@ $canonical = preg_match('#^https?://#i', $canonicalBase) === 1
     <?php endif; ?>
     <title><?= $e($metaTitle) ?></title>
     <link rel="stylesheet" href="/assets/vendor/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/site.css?v=20260905.2">
+    <link rel="stylesheet" href="/assets/css/site.css?v=20260907.1">
 </head>
 <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>

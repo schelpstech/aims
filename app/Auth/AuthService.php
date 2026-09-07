@@ -241,6 +241,124 @@ final class AuthService
         }
     }
 
+    public function changePassword(
+        string $currentPassword,
+        string $newPassword,
+        ?string $ipAddress,
+        string $userAgent,
+    ): AuthResult {
+        $user = $this->currentUser();
+        if ($user === null) {
+            return AuthResult::failure('unauthenticated', 'Authentication required.');
+        }
+
+        $passwordErrors = $this->passwordPolicy->errors($newPassword);
+        if ($passwordErrors !== []) {
+            return AuthResult::failure('validation_failed', implode(' ', $passwordErrors));
+        }
+
+        $now = $this->now();
+        $userId = (int) ($user['id'] ?? 0);
+        $email = $this->normalizeEmail((string) ($user['email'] ?? ''));
+        $ipAddress = $this->validIp($ipAddress);
+        $configuration = (array) ($this->config['password_change'] ?? []);
+        $identityMaximum = max(1, (int) ($configuration['identity_attempts'] ?? 5));
+        $ipMaximum = max($identityMaximum, (int) ($configuration['ip_attempts'] ?? 20));
+        $decayMinutes = max(1, (int) ($configuration['decay_minutes'] ?? 15));
+
+        if (!$this->repository->consumeRequestRateLimit(
+            'password_change',
+            hash('sha256', $email),
+            $ipAddress,
+            $identityMaximum,
+            $ipMaximum,
+            $decayMinutes * 60,
+            $now,
+        )) {
+            $this->repository->securityEvent(
+                $userId,
+                'auth.password_change_throttled',
+                'medium',
+                'An authenticated password change was rejected by rate limiting.',
+                $ipAddress,
+                $userAgent,
+                [],
+                $now,
+            );
+
+            return AuthResult::failure(
+                'throttled',
+                'Too many password change attempts. Please try again later.',
+                $decayMinutes * 60,
+            );
+        }
+
+        $credentials = $this->repository->findByEmail($email);
+        $currentHash = is_array($credentials) && is_string($credentials['password_hash'] ?? null)
+            ? $credentials['password_hash']
+            : '';
+        if ($currentHash === '' || !Security::verifyPassword($currentPassword, $currentHash)) {
+            $this->repository->securityEvent(
+                $userId,
+                'auth.password_change_failed',
+                'low',
+                'An authenticated password change supplied an invalid current password.',
+                $ipAddress,
+                $userAgent,
+                [],
+                $now,
+            );
+
+            return AuthResult::failure('invalid_current_password', 'The current password is incorrect.');
+        }
+
+        if (Security::verifyPassword($newPassword, $currentHash)) {
+            return AuthResult::failure('password_reused', 'Choose a new password that differs from the current password.');
+        }
+
+        $changed = $this->repository->changePasswordAndRevokeSessions(
+            $userId,
+            $currentHash,
+            Security::hashPassword($newPassword),
+            $now,
+        );
+        if (!$changed) {
+            return AuthResult::failure('password_changed_concurrently', 'Your password changed in another session. Sign in again and retry.');
+        }
+
+        $this->session->regenerate();
+        $this->csrf->rotate();
+        $this->repository->recordSession(
+            $userId,
+            Security::tokenDigest($this->session->id()),
+            $ipAddress,
+            $userAgent,
+            $now->modify('+' . max(1, $this->sessionLifetimeMinutes) . ' minutes'),
+            $now,
+        );
+        $this->repository->audit(
+            $userId,
+            'auth.password_changed',
+            'An authenticated user changed their password and existing sessions were revoked.',
+            $ipAddress,
+            $userAgent,
+            [],
+            $now,
+        );
+        $this->repository->securityEvent(
+            $userId,
+            'auth.password_changed',
+            'medium',
+            'An authenticated password change completed successfully.',
+            $ipAddress,
+            $userAgent,
+            [],
+            $now,
+        );
+
+        return AuthResult::success('password_changed', 'Your password has been changed. Other sessions were signed out.');
+    }
+
     public function requestPasswordReset(string $email, ?string $ipAddress, string $userAgent): AuthResult
     {
         $now = $this->now();

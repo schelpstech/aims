@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Auth\AuthController;
+use App\Controllers\Admin\AdminDashboardController;
 use App\Controllers\Membership\MembershipApplicationController;
 use App\Controllers\Membership\MembershipAdminController;
 use App\Controllers\MemberPortal\MemberPortalController;
@@ -53,6 +54,7 @@ return static function (
     ?ReportingController $reporting = null,
     ?\App\Middleware\AuthorizeMiddleware $reportView = null,
     ?\App\Middleware\AuthorizeMiddleware $reportExport = null,
+    ?AdminDashboardController $adminDashboard = null,
 ): void {
     $router->get('/health', static function (Request $request): Response {
         return Response::json([
@@ -108,7 +110,12 @@ return static function (
     $router->get('/verify-email', [$auth, 'showVerifyEmail']);
     $router->post('/verify-email', [$auth, 'verifyEmail']);
     $router->get('/account', [$auth, 'account'], [$authenticate]);
+    $router->get('/account/security', [$auth, 'showSecurity'], [$authenticate]);
+    $router->post('/account/security', [$auth, 'changePassword'], [$authenticate]);
     $router->post('/logout', [$auth, 'logout'], [$authenticate]);
+    if ($adminDashboard !== null) {
+        $router->get('/admin', [$adminDashboard, 'index'], [$authenticate]);
+    }
     if ($payments !== null) {
         $router->get('/account/invoices', [$payments, 'index'], [$authenticate]);
         $router->post('/account/invoices/{invoice}/pay', [$payments, 'initialize'], [$authenticate]);

@@ -88,6 +88,25 @@ final class InMemoryAuthRepository implements AuthRepositoryInterface
         $this->users[$userId]['password_changed_at'] = $now->format('Y-m-d H:i:s.u');
     }
 
+    public function changePasswordAndRevokeSessions(
+        int $userId,
+        string $expectedPasswordHash,
+        string $newPasswordHash,
+        DateTimeImmutable $now,
+    ): bool {
+        if (!isset($this->users[$userId]) || !hash_equals((string) $this->users[$userId]['password_hash'], $expectedPasswordHash)) {
+            return false;
+        }
+
+        $this->updatePasswordHash($userId, $newPasswordHash, $now);
+        $this->users[$userId]['failed_login_attempts'] = 0;
+        $this->users[$userId]['locked_until'] = null;
+        $this->revokeUnusedTokens($userId, 'password_reset', $now);
+        $this->revokeAllSessions($userId, $now);
+
+        return true;
+    }
+
     public function storeToken(int $userId, string $purpose, string $tokenHash, DateTimeImmutable $expiresAt, DateTimeImmutable $now): void
     {
         $this->tokens[$purpose][$tokenHash] = [

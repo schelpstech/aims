@@ -25,6 +25,10 @@
                 <p><a class="btn btn-primary" href="/portal">Open member portal</a></p>
             <?php endif; ?>
 
+            <?php if (!empty($canAccessAdmin)): ?>
+                <p><a class="btn btn-gold" href="/admin">Open admin dashboard</a></p>
+            <?php endif; ?>
+
             <?php if (!empty($canManageMembership)): ?>
                 <p><a class="btn btn-outline-navy" href="/admin/membership/applications">Open membership administration</a></p>
             <?php endif; ?>
@@ -32,6 +36,8 @@
             <?php if (!empty($canAccessReports)): ?>
                 <p><a class="btn btn-outline-navy" href="/admin/reports">Open reporting dashboard</a></p>
             <?php endif; ?>
+
+            <p><a class="btn btn-outline-navy" href="/account/security">Change password</a></p>
 
             <form method="post" action="/logout">
                 <?= $csrf->field() ?>
